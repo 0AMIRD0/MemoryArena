@@ -5,11 +5,16 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(FetchContent)
+
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
   googlebenchmark
   GIT_REPOSITORY https://github.com/google/benchmark.git
   GIT_TAG        v1.8.3
 )
+
 FetchContent_MakeAvailable(googlebenchmark)
 
 add_library(arena_lib

@@ -1,4 +1,3 @@
-
 #include <benchmark/benchmark.h>
 #include <vector>
 #include <random>
@@ -27,56 +26,56 @@ struct ArenaFixture : benchmark::Fixture {
     PoolAllocator* poolAllocator;
 };
 
-BENCHMARK_DEFINE_F(ArenaFixture, LinearArena_Allocate_16B)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(ArenaFixture, LinearArena_allocate_16B)(benchmark::State& state) {
     for (auto _ : state) {
-        void* p = linearArena->Allocate(16);
+        void* p = linearArena->allocate(16);
         benchmark::DoNotOptimize(p);
     }
 }
-BENCHMARK_REGISTER_F(ArenaFixture, LinearArena_Allocate_16B);
+BENCHMARK_REGISTER_F(ArenaFixture, LinearArena_allocate_16B);
 
-BENCHMARK_DEFINE_F(ArenaFixture, LinearArena_Allocate_1KB)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(ArenaFixture, LinearArena_allocate_1KB)(benchmark::State& state) {
     for (auto _ : state) {
-        void* p = linearArena->Allocate(1024);
+        void* p = linearArena->allocate(1024);
         benchmark::DoNotOptimize(p);
     }
 }
-BENCHMARK_REGISTER_F(ArenaFixture, LinearArena_Allocate_1KB);
+BENCHMARK_REGISTER_F(ArenaFixture, LinearArena_allocate_1KB);
 
-BENCHMARK_DEFINE_F(ArenaFixture, LinearArena_Allocate_1MB)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(ArenaFixture, LinearArena_allocate_1MB)(benchmark::State& state) {
     for (auto _ : state) {
-        void* p = linearArena->Allocate(1024 * 1024);
+        void* p = linearArena->allocate(1024 * 1024);
         benchmark::DoNotOptimize(p);
     }
 }
-BENCHMARK_REGISTER_F(ArenaFixture, LinearArena_Allocate_1MB);
+BENCHMARK_REGISTER_F(ArenaFixture, LinearArena_allocate_1MB);
 
-BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_AllocateFree_16B)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_allocate_deallocate_16B)(benchmark::State& state) {
     for (auto _ : state) {
-        void* p = freeListArena->Allocate(16);
+        void* p = freeListArena->allocate(16);
         benchmark::DoNotOptimize(p);
-        freeListArena->Deallocate(p);
+        freeListArena->deallocate(p);
     }
 }
-BENCHMARK_REGISTER_F(ArenaFixture, FreeListArena_AllocateFree_16B);
+BENCHMARK_REGISTER_F(ArenaFixture, FreeListArena_allocate_deallocate_16B);
 
-BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_AllocateFree_1KB)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_allocate_deallocate_1KB)(benchmark::State& state) {
     for (auto _ : state) {
-        void* p = freeListArena->Allocate(1024);
+        void* p = freeListArena->allocate(1024);
         benchmark::DoNotOptimize(p);
-        freeListArena->Deallocate(p);
+        freeListArena->deallocate(p);
     }
 }
-BENCHMARK_REGISTER_F(ArenaFixture, FreeListArena_AllocateFree_1KB);
+BENCHMARK_REGISTER_F(ArenaFixture, FreeListArena_allocate_deallocate_1KB);
 
-BENCHMARK_DEFINE_F(ArenaFixture, PoolAllocator_AllocateFree_64B)(benchmark::State& state) {
+BENCHMARK_DEFINE_F(ArenaFixture, PoolAllocator_allocate_deallocate_64B)(benchmark::State& state) {
     for (auto _ : state) {
-        void* p = poolAllocator->Allocate(64);
+        void* p = poolAllocator->allocate();
         benchmark::DoNotOptimize(p);
-        poolAllocator->Deallocate(p);
+        poolAllocator->deallocate(p);
     }
 }
-BENCHMARK_REGISTER_F(ArenaFixture, PoolAllocator_AllocateFree_64B);
+BENCHMARK_REGISTER_F(ArenaFixture, PoolAllocator_allocate_deallocate_64B);
 
 static void BM_NewDelete_16B(benchmark::State& state) {
     for (auto _ : state) {
@@ -119,10 +118,10 @@ static constexpr int BATCH_SIZE = 1000;
 BENCHMARK_DEFINE_F(ArenaFixture, LinearArena_BatchReset)(benchmark::State& state) {
     for (auto _ : state) {
         for (int i = 0; i < BATCH_SIZE; ++i) {
-            void* p = linearArena->Allocate(32);
+            void* p = linearArena->allocate(32);
             benchmark::DoNotOptimize(p);
         }
-        linearArena->Reset();
+        linearArena->reset();
     }
 }
 BENCHMARK_REGISTER_F(ArenaFixture, LinearArena_BatchReset);
@@ -132,10 +131,10 @@ BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_BatchDealloc)(benchmark::State& s
     ptrs.reserve(BATCH_SIZE);
     for (auto _ : state) {
         for (int i = 0; i < BATCH_SIZE; ++i) {
-            ptrs.push_back(freeListArena->Allocate(32));
+            ptrs.push_back(freeListArena->allocate(32));
         }
         for (void* p : ptrs) {
-            freeListArena->Deallocate(p);
+            freeListArena->deallocate(p);
         }
         ptrs.clear();
     }
@@ -167,15 +166,15 @@ BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_RandomSizes)(benchmark::State& st
     for (auto _ : state) {
         if (actionDist(gen) == 0 || activePtrs.empty()) {
             size_t sz = sizeDist(gen);
-            void* p = freeListArena->Allocate(sz);
+            void* p = freeListArena->allocate(sz);
             if (p) activePtrs.push_back(p);
         } else {
             size_t idx = gen() % activePtrs.size();
-            freeListArena->Deallocate(activePtrs[idx]);
+            freeListArena->deallocate(activePtrs[idx]);
             activePtrs.erase(activePtrs.begin() + idx);
         }
     }
-    for (void* p : activePtrs) freeListArena->Deallocate(p);
+    for (void* p : activePtrs) freeListArena->deallocate(p);
 }
 BENCHMARK_REGISTER_F(ArenaFixture, FreeListArena_RandomSizes);
 
