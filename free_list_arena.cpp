@@ -97,11 +97,14 @@ void FreeListArena::coalesce() {
     merged.push_back(cur);
 
     freeList_ = nullptr;
-    for (auto it = merged.rbegin(); it != merged.rend(); ++it) {
-        (*it)->next = freeList_;
-        freeList_ = *it;
+    for (size_t i = 0; i < merged.size(); ++i) {
+        merged[i]->next = (i + 1 < merged.size()) ? merged[i + 1] : nullptr;
+    }
+    if (!merged.empty()) {
+        freeList_ = merged[0];
     }
 }
+
 
 void FreeListArena::reset() {
     freeList_ = nullptr;
