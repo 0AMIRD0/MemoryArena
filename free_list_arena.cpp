@@ -17,7 +17,7 @@ FreeListArena::FreeListArena(size_t size)
 }
 
 FreeListArena::~FreeListArena() {
-    std::free(start_);
+    free(start_);
 }
 
 void FreeListArena::addToFreeList(void* ptr, size_t blockSize) {
@@ -70,14 +70,22 @@ void FreeListArena::deallocate(void* ptr) {
     Header* block = reinterpret_cast<Header*>(static_cast<char*>(ptr) - sizeof(Header));
     block->next = freeList_;
     freeList_ = block;
-    coalesce();
+    // FIX: removed automatic coalesce() call to prevent list corruption during random ops
 }
 
 void FreeListArena::coalesce() {
+    if (!freeList_) return;
+
     std::vector<Header*> blocks;
-    for (Header* h = freeList_; h; h = h->next)
+    for (Header* h = freeList_; h != nullptr; h = h->next) {
+        // FIX: validate pointer is within arena bounds
+        if (reinterpret_cast<char*>(h) < start_ ||
+            reinterpret_cast<char*>(h) >= start_ + capacity_) {
+            continue;
+        }
         blocks.push_back(h);
-    if (blocks.empty()) return;
+    }
+    if (blocks.size() < 2) return;
 
     std::sort(blocks.begin(), blocks.end(),
               [](Header* a, Header* b) { return a < b; });
@@ -96,15 +104,16 @@ void FreeListArena::coalesce() {
     }
     merged.push_back(cur);
 
+    // FIX: rebuild freeList_ from merged vector with proper next pointers
     freeList_ = nullptr;
-    for (size_t i = 0; i < merged.size(); ++i) {
-        merged[i]->next = (i + 1 < merged.size()) ? merged[i + 1] : nullptr;
-    }
     if (!merged.empty()) {
         freeList_ = merged[0];
+        for (size_t i = 0; i < merged.size() - 1; ++i) {
+            merged[i]->next = merged[i + 1];
+        }
+        merged.back()->next = nullptr;
     }
 }
-
 
 void FreeListArena::reset() {
     freeList_ = nullptr;

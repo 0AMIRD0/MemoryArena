@@ -21,12 +21,12 @@ public:
         Header* next;
         size_t size;
     };
+    void coalesce();
 private:
     char* start_;
     size_t capacity_;
     Header* freeList_;
 
     void addToFreeList(void* ptr, size_t blockSize);
-    void coalesce();
     static size_t alignUp(size_t n, size_t alignment);
 };

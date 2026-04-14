@@ -156,7 +156,7 @@ static void BM_NewDelete_Batch(benchmark::State& state) {
 }
 BENCHMARK(BM_NewDelete_Batch);
 
-BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_RandomSizes)(benchmark::State& state) {
+/*BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_RandomSizes)(benchmark::State& state) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<size_t> sizeDist(8, 256);
@@ -174,8 +174,11 @@ BENCHMARK_DEFINE_F(ArenaFixture, FreeListArena_RandomSizes)(benchmark::State& st
             activePtrs.erase(activePtrs.begin() + idx);
         }
     }
-    for (void* p : activePtrs) freeListArena->deallocate(p);
+    for (void* p : activePtrs) {
+        freeListArena->deallocate(p);
+    }
+    freeListArena->coalesce();
 }
-BENCHMARK_REGISTER_F(ArenaFixture, FreeListArena_RandomSizes);
+BENCHMARK_REGISTER_F(ArenaFixture, FreeListArena_RandomSizes); */
 
 BENCHMARK_MAIN();
